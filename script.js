@@ -113,6 +113,7 @@ function renderAll() {
   renderToday();
   renderStats();
   renderTimeline();
+  renderRotationPanel();
   renderMemories();
   renderSettings();
   renderNavCounts();
@@ -159,22 +160,58 @@ function renderMoodButtons() {
 }
 function updateCharCount() { $('charCount').textContent = `${$('diaryInput').value.length} / 500`; }
 
-function renderTimeline() {
+
+function getRotationRows() {
   const dayIndex = getDayIndex();
   let start = 1;
-  let html = '';
-  state.rotations.forEach(r => {
+  return state.rotations.map((r, i) => {
     const days = Math.max(1, Number(r.days) || 1);
+    const end = start + days - 1;
     const completed = clamp(dayIndex - start + 1, 0, days);
     const pct = Math.round((completed / days) * 100);
-    html += `<div class="timeline-row">
-      <div class="timeline-head"><span>${escapeHtml(r.name)}</span><small>${completed} / ${days} days</small></div>
-      <div class="mini-track"><span style="width:${pct}%"></span></div>
-      <div class="timeline-head"><small></small><small>${pct}%</small></div>
-    </div>`;
+    const status = dayIndex < start ? 'upcoming' : (dayIndex > end ? 'finished' : 'current');
+    const row = { ...r, index: i + 1, start, end, days, completed, pct, status };
     start += days;
+    return row;
   });
+}
+
+function renderTimeline() {
+  const rows = getRotationRows();
+  const html = rows.map(r => `<div class="timeline-row ${r.status}">
+      <div class="timeline-head"><span>${escapeHtml(r.name)}</span><small>${r.completed} / ${r.days} days</small></div>
+      <div class="mini-track"><span style="width:${r.pct}%"></span></div>
+      <div class="timeline-head"><small>${rotationStatusText(r)}</small><small>${r.pct}%</small></div>
+    </div>`).join('') + `<div class="timeline-total">Total: ${rows.reduce((a,r)=>a+r.days,0)} days</div>`;
   $('rotationTimeline').innerHTML = html;
+}
+
+function renderRotationPanel() {
+  const rows = getRotationRows();
+  const total = rows.reduce((a, r) => a + r.days, 0);
+  const html = rows.map(r => `
+    <article class="rotation-big-card ${r.status}">
+      <div class="rotation-big-head">
+        <div>
+          <span class="rotation-badge">${r.status === 'current' ? 'Current Rotation' : rotationStatusText(r)}</span>
+          <h3>${escapeHtml(r.name)}</h3>
+        </div>
+        <strong>${r.pct}%</strong>
+      </div>
+      <div class="big-track"><span style="width:${r.pct}%"></span></div>
+      <div class="rotation-meta">
+        <span>${r.completed} days completed</span>
+        <span>${Math.max(0, r.days - r.completed)} days left</span>
+        <span>${r.days} days total</span>
+      </div>
+    </article>`).join('');
+  $('rotationPanelList').innerHTML = html + `<div class="rotation-total-card">Total rotation plan: <b>${total} days</b></div>`;
+}
+
+function rotationStatusText(r) {
+  if (r.status === 'finished') return 'Completed';
+  if (r.status === 'current') return `Day ${r.completed} of ${r.days}`;
+  return 'Upcoming';
 }
 
 function renderStats() {

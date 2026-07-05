@@ -19,6 +19,7 @@
         <button class="nav-item" data-tab="pages">▱ <span>Pages Torn</span></button>
         <button class="nav-item" data-tab="happy">😊 <span>Happy Moments</span><b id="happyNavCount">0</b></button>
         <button class="nav-item" data-tab="difficult">😟 <span>Difficult Moments</span><b id="difficultNavCount">0</b></button>
+        <button class="nav-item" data-tab="rotations">🗓 <span>Rotations</span></button>
         <button class="nav-item" data-tab="stats">▥ <span>Stats</span></button>
         <button class="nav-item" data-tab="settings">⚙ <span>Settings</span></button>
       </nav>
@@ -106,6 +107,12 @@
         <h2>Difficult Moments</h2>
         <p class="panel-subtitle">These are not failures. These are pages you survived.</p>
         <div id="difficultList" class="memory-list"></div>
+      </section>
+
+      <section class="panel" id="rotationsPanel">
+        <h2>Rotation Timeline</h2>
+        <p class="panel-subtitle">Survive one rotation at a time. The current rotation is highlighted.</p>
+        <div id="rotationPanelList" class="rotation-panel-list"></div>
       </section>
 
       <section class="panel" id="statsPanel">
