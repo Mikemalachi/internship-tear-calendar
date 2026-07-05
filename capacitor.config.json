@@ -1,0 +1,8 @@
+{
+  "appId": "com.milkyas.internshiptearcalendar",
+  "appName": "Internship Tear Calendar",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https"
+  }
+}

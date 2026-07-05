@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Internship Survivor</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Digital Tear-Off Calendar</p>
+        <h1>Internship Survivor <span>🫀</span></h1>
+      </div>
+      <button id="settingsBtn" class="icon-btn" title="Settings">⚙️</button>
+    </header>
+
+    <main>
+      <section id="setupScreen" class="screen active setup-screen">
+        <div class="setup-card">
+          <p class="eyebrow">Start your survival calendar</p>
+          <h2>One page. One day. One year.</h2>
+          <label>Internship start date
+            <input id="startDateInput" type="date" />
+          </label>
+          <label>Internship end date
+            <input id="endDateInput" type="date" />
+          </label>
+          <label>Current / first rotation
+            <input id="rotationInput" type="text" value="Surgery Rotation" />
+          </label>
+          <button id="startBtn" class="primary-btn">Create my calendar</button>
+        </div>
+      </section>
+
+      <section id="tearScreen" class="screen tear-screen">
+        <div class="mini-progress">
+          <div>
+            <p class="eyebrow">Overall progress</p>
+            <strong id="overallPercent">0%</strong>
+            <span id="overallText">0 pages torn • 365 left</span>
+          </div>
+          <div class="progress-track"><div id="overallBar" class="progress-fill"></div></div>
+        </div>
+
+        <div class="paper-wrap">
+          <article id="paperCard" class="paper-card">
+            <div class="paper-pin"></div>
+            <p class="paper-small">Internship Year</p>
+            <h2 id="dayNumber">DAY 1</h2>
+            <h3 id="todayDate">Sunday, 5 July 2026</h3>
+            <div class="divider"><span>♡</span></div>
+            <h4 id="currentRotation">Surgery Rotation</h4>
+            <p id="daysRemaining" class="remaining">364 pages remaining</p>
+
+            <div class="psalm-box">
+              <p class="psalm-label">📖 Today's Psalm</p>
+              <blockquote id="psalmText">The Lord is my shepherd; I shall not want.</blockquote>
+              <p id="psalmRef" class="psalm-ref">Psalm 23:1</p>
+            </div>
+          </article>
+        </div>
+
+        <button id="tearBtn" class="tear-btn">📄 Tear off today</button>
+        <p id="tearHint" class="hint">One day at a time. You got this. 🧡</p>
+      </section>
+
+      <section id="diaryScreen" class="screen diary-screen">
+        <div class="panel diary-panel">
+          <p class="eyebrow">Before this page disappears forever</p>
+          <h2>How was today?</h2>
+          <div class="mood-grid" id="moodGrid">
+            <button class="mood-btn" data-mood="happy">😊 <span>Happy</span></button>
+            <button class="mood-btn" data-mood="normal">😐 <span>Normal</span></button>
+            <button class="mood-btn" data-mood="difficult">😔 <span>Difficult</span></button>
+            <button class="mood-btn" data-mood="exhausting">😩 <span>Exhausting</span></button>
+          </div>
+          <label class="diary-label">Today's diary <span>(optional)</span>
+            <textarea id="diaryText" maxlength="600" placeholder="Write one sentence, a memory, a sad thing, an exciting thing, or skip..."></textarea>
+          </label>
+          <div class="diary-actions">
+            <button id="saveEntryBtn" class="primary-btn">Save entry</button>
+            <button id="skipEntryBtn" class="ghost-btn">Skip journal</button>
+          </div>
+        </div>
+      </section>
+
+      <section id="statsScreen" class="screen stats-screen">
+        <div class="stats-grid">
+          <div class="panel big-panel">
+            <p class="eyebrow">Rotation timeline</p>
+            <h2>Your year, broken into smaller battles</h2>
+            <div id="rotationBars" class="rotation-list"></div>
+          </div>
+          <div class="panel">
+            <p class="eyebrow">Stats at a glance</p>
+            <div id="statsList" class="stats-list"></div>
+          </div>
+          <div class="panel big-panel">
+            <div class="memory-header">
+              <div>
+                <p class="eyebrow">Memory Vault</p>
+                <h2>Pages torn</h2>
+              </div>
+              <div class="filter-tabs">
+                <button class="filter-btn active" data-filter="all">All</button>
+                <button class="filter-btn" data-filter="happy">Happy</button>
+                <button class="filter-btn" data-filter="difficult">Difficult</button>
+              </div>
+            </div>
+            <div id="memoryList" class="memory-list"></div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <nav class="bottom-nav">
+      <button class="nav-btn active" data-screen="tearScreen">📄<span>Tear</span></button>
+      <button class="nav-btn" data-screen="diaryScreen">✍️<span>Diary</span></button>
+      <button class="nav-btn" data-screen="statsScreen">📊<span>Stats</span></button>
+    </nav>
+  </div>
+
+  <dialog id="settingsDialog">
+    <form method="dialog" class="settings-card">
+      <h2>Settings</h2>
+      <label>Start date<input id="settingsStart" type="date" /></label>
+      <label>End date<input id="settingsEnd" type="date" /></label>
+      <label>Current rotation<input id="settingsRotation" type="text" /></label>
+      <button id="saveSettingsBtn" class="primary-btn" value="default">Save settings</button>
+      <button class="ghost-btn" value="cancel">Close</button>
+    </form>
+  </dialog>
+
+  <script src="script.js"></script>
+</body>
+</html>
