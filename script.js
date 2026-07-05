@@ -1,285 +1,366 @@
-const STORAGE_KEY = 'internshipTearCalendarV2';
-
-const todayISO = () => {
-  const d = new Date();
-  d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
-  return d.toISOString().slice(0, 10);
-};
-const parseDate = iso => new Date(`${iso}T00:00:00`);
-const fmt = iso => parseDate(iso).toLocaleDateString(undefined, {
-  weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
-});
-const daysBetween = (a, b) => Math.round((parseDate(b) - parseDate(a)) / 86400000);
-const clamp = (n, min, max) => Math.max(min, Math.min(max, n));
-const $ = id => document.getElementById(id);
-
-const quotes = [
-  'I only need to survive this page.',
-  'One day closer to Dr. Milkyas.',
-  'Today becomes experience tomorrow.',
-  'Tear the page. Keep the lesson.',
-  'This year is not your whole life.',
-  'Small survival is still survival.',
-  'Even difficult days become pages torn.'
-];
+const $ = (id) => document.getElementById(id);
+const LS_KEY = 'internshipSurvivor.v4';
+const MS_DAY = 24 * 60 * 60 * 1000;
 
 const psalms = [
-  { ref: 'Psalm 23:4', text: 'I will fear no evil: for thou art with me.' },
-  { ref: 'Psalm 27:1', text: 'The LORD is my light and my salvation; whom shall I fear?' },
-  { ref: 'Psalm 34:18', text: 'The LORD is nigh unto them that are of a broken heart.' },
-  { ref: 'Psalm 46:1', text: 'God is our refuge and strength, a very present help in trouble.' },
-  { ref: 'Psalm 55:22', text: 'Cast thy burden upon the LORD, and he shall sustain thee.' },
-  { ref: 'Psalm 56:3', text: 'What time I am afraid, I will trust in thee.' },
-  { ref: 'Psalm 121:2', text: 'My help cometh from the LORD, which made heaven and earth.' },
-  { ref: 'Psalm 138:3', text: 'In the day when I cried thou answeredst me.' }
+  ['The Lord is my shepherd; I shall not want.', 'Psalm 23:1'],
+  ['God is our refuge and strength, a very present help in trouble.', 'Psalm 46:1'],
+  ['I will lift up mine eyes unto the hills, from whence cometh my help.', 'Psalm 121:1'],
+  ['Wait on the Lord: be of good courage, and he shall strengthen thine heart.', 'Psalm 27:14'],
+  ['The Lord is my light and my salvation; whom shall I fear?', 'Psalm 27:1'],
+  ['This is the day which the Lord hath made; we will rejoice and be glad in it.', 'Psalm 118:24'],
+  ['Cast thy burden upon the Lord, and he shall sustain thee.', 'Psalm 55:22'],
+  ['The Lord is nigh unto them that are of a broken heart.', 'Psalm 34:18'],
+  ['The Lord shall preserve thy going out and thy coming in.', 'Psalm 121:8'],
+  ['The steps of a good man are ordered by the Lord.', 'Psalm 37:23'],
+  ['In God have I put my trust: I will not be afraid.', 'Psalm 56:11'],
+  ['He healeth the broken in heart, and bindeth up their wounds.', 'Psalm 147:3'],
+  ['I cried unto the Lord with my voice, and he heard me.', 'Psalm 3:4'],
+  ['The Lord will give strength unto his people.', 'Psalm 29:11'],
+  ['Thou art my hiding place and my shield: I hope in thy word.', 'Psalm 119:114']
 ];
 
-const moods = [
-  { key: 'happy', icon: '😊', label: 'Happy moment', group: 'happy' },
-  { key: 'exciting', icon: '🌟', label: 'Exciting moment', group: 'happy' },
-  { key: 'normal', icon: '😐', label: 'Normal day', group: 'neutral' },
-  { key: 'lesson', icon: '📚', label: 'Learned something', group: 'happy' },
-  { key: 'difficult', icon: '😔', label: 'Difficult day', group: 'sad' },
-  { key: 'sad', icon: '💔', label: 'Sad moment', group: 'sad' },
-  { key: 'exhausting', icon: '😩', label: 'Exhausting day', group: 'sad' },
-  { key: 'meaningful', icon: '❤️', label: 'Meaningful patient', group: 'happy' }
+const defaultRotations = [
+  { name: 'Surgery', days: 90 },
+  { name: 'Internal Medicine', days: 90 },
+  { name: 'Pediatrics', days: 60 },
+  { name: 'OBGYN', days: 60 },
+  { name: 'Elective / Other', days: 65 }
 ];
 
-let state = load();
-let pendingTearDate = null;
-let selectedMoodKey = 'happy';
-let currentTab = 'history';
+let state = loadState();
+let selectedMood = state.todayDraft?.mood || '';
 
-function defaultState() {
-  const start = todayISO();
-  const endDate = new Date();
-  endDate.setDate(endDate.getDate() + 364);
-  const end = endDate.toISOString().slice(0, 10);
-  return { setup: false, start, end, rotation: 'Surgery', entries: [] };
+function todayLocal() {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  return d;
 }
+function parseDate(v) {
+  const [y, m, d] = v.split('-').map(Number);
+  return new Date(y, m - 1, d);
+}
+function isoDate(d) {
+  const z = new Date(d);
+  z.setHours(0, 0, 0, 0);
+  return `${z.getFullYear()}-${String(z.getMonth() + 1).padStart(2, '0')}-${String(z.getDate()).padStart(2, '0')}`;
+}
+function formatDate(d) {
+  return d.toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+}
+function shortDate(d) {
+  return d.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short' });
+}
+function daysBetween(a, b) {
+  return Math.round((parseDate(isoDate(b)) - parseDate(isoDate(a))) / MS_DAY);
+}
+function addDays(date, days) {
+  const d = new Date(date);
+  d.setDate(d.getDate() + days);
+  return d;
+}
+function clamp(n, min, max) { return Math.max(min, Math.min(max, n)); }
 
-function load() {
-  try {
-    const oldV2 = JSON.parse(localStorage.getItem(STORAGE_KEY));
-    if (oldV2) return oldV2;
-    const oldV1 = JSON.parse(localStorage.getItem('internshipTearCalendarV1'));
-    if (oldV1) return oldV1;
-    return defaultState();
-  } catch {
-    return defaultState();
+function loadState() {
+  const today = todayLocal();
+  const saved = localStorage.getItem(LS_KEY);
+  if (saved) {
+    try { return JSON.parse(saved); } catch {}
   }
-}
-function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
-function getMood(key) { return moods.find(m => m.key === key) || moods[0]; }
-function escapeHTML(str) {
-  return String(str || '').replace(/[&<>'"]/g, c => ({
-    '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
-  }[c]));
-}
-
-function init() {
-  renderMoodGrid();
-  bindEvents();
-  render();
-}
-
-function bindEvents() {
-  $('saveSetupBtn').addEventListener('click', () => {
-    state.start = $('startDate').value || todayISO();
-    state.end = $('endDate').value || state.end;
-    state.rotation = $('rotationName').value.trim() || 'Surgery';
-    state.setup = true;
-    save();
-    render();
-  });
-
-  $('tearBtn').addEventListener('click', tearToday);
-  $('skipJournalBtn').addEventListener('click', () => saveEntry(true));
-  $('saveJournalBtn').addEventListener('click', () => saveEntry(false));
-  $('settingsBtn').addEventListener('click', openSettings);
-  $('closeSettingsBtn').addEventListener('click', () => $('settingsModal').classList.add('hidden'));
-  $('saveSettingsBtn').addEventListener('click', saveSettings);
-  $('resetBtn').addEventListener('click', resetAll);
-
-  $('journalText').addEventListener('touchstart', () => $('journalText').focus(), { passive: true });
-  $('journalText').addEventListener('click', () => $('journalText').focus());
-  $('moodGrid').addEventListener('click', chooseMoodFromEvent);
-  $('moodGrid').addEventListener('touchend', chooseMoodFromEvent, { passive: false });
-
-  document.querySelectorAll('.tab').forEach(btn => {
-    btn.addEventListener('click', () => {
-      currentTab = btn.dataset.tab;
-      renderTabs();
-    });
-  });
-}
-
-function render() {
-  $('setupScreen').classList.toggle('hidden', state.setup);
-  $('homeScreen').classList.toggle('hidden', !state.setup);
-
-  if (!state.setup) {
-    $('startDate').value = state.start;
-    $('endDate').value = state.end;
-    $('rotationName').value = state.rotation;
-    return;
-  }
-
-  const t = todayISO();
-  const total = Math.max(1, daysBetween(state.start, state.end) + 1);
-  const rawDay = daysBetween(state.start, t) + 1;
-  const day = clamp(rawDay, 1, total);
-  const tornToday = state.entries.some(e => e.date === t);
-  const completed = state.entries.length;
-  const pct = clamp(Math.round((completed / total) * 100), 0, 100);
-
-  $('dayTitle').textContent = rawDay > total ? 'DONE' : `DAY ${day}`;
-  $('paperDate').textContent = fmt(t);
-  $('rotationText').textContent = `${state.rotation} Rotation`;
-  $('daysLeftText').textContent = rawDay > total ? 'Internship completed.' : `${Math.max(0, total - completed)} pages remaining`;
-  const dailyPsalm = psalms[day % psalms.length];
-  $('quoteText').innerHTML = `<span class="main-quote">“${quotes[day % quotes.length]}”</span><span class="psalm-quote">${dailyPsalm.text}<br><strong>${dailyPsalm.ref}</strong></span>`;
-  $('progressText').textContent = `${pct}%`;
-  $('progressFill').style.width = `${pct}%`;
-  $('daysSummary').textContent = `${completed} pages torn • ${Math.max(0, total - completed)} left • ${total} total`;
-  $('tearBtn').disabled = tornToday || rawDay > total;
-  $('tearBtn').textContent = tornToday ? 'TODAY ALREADY TORN' : rawDay > total ? 'INTERNSHIP COMPLETE' : 'TEAR OFF TODAY';
-  $('tearHint').textContent = tornToday ? 'Come back tomorrow for the next page.' : 'At the end of the day, tear this page and save a memory.';
-  $('paper').classList.remove('tearing');
-  renderTabs();
-}
-
-function tearToday() {
-  pendingTearDate = todayISO();
-  $('tearBtn').disabled = true;
-  $('paper').classList.add('tearing');
-  setTimeout(() => {
-    $('journalScreen').classList.remove('hidden');
-    $('journalText').value = '';
-    selectedMoodKey = 'happy';
-    updateMoodSelection();
-    $('journalScreen').scrollIntoView({ behavior: 'smooth', block: 'start' });
-    setTimeout(() => $('journalText').focus(), 300);
-  }, 700);
-}
-
-function renderMoodGrid() {
-  const grid = $('moodGrid');
-  grid.innerHTML = '';
-  moods.forEach(m => {
-    const b = document.createElement('button');
-    b.type = 'button';
-    b.className = 'mood-option';
-    b.dataset.moodKey = m.key;
-    b.innerHTML = `<span class="mood-icon">${m.icon}</span><span class="mood-copy"><strong>${m.label}</strong><small>${m.group === 'happy' ? 'Saved as happy' : m.group === 'sad' ? 'Saved as difficult' : 'Saved as normal'}</small></span>`;
-    grid.appendChild(b);
-  });
-  updateMoodSelection();
-}
-
-function chooseMoodFromEvent(event) {
-  const btn = event.target.closest('.mood-option');
-  if (!btn) return;
-  event.preventDefault();
-  selectedMoodKey = btn.dataset.moodKey;
-  updateMoodSelection();
-}
-
-function updateMoodSelection() {
-  document.querySelectorAll('.mood-option').forEach(btn => {
-    btn.classList.toggle('selected', btn.dataset.moodKey === selectedMoodKey);
-  });
-}
-
-function saveEntry(skipped) {
-  const date = pendingTearDate || todayISO();
-  const mood = getMood(selectedMoodKey);
-  const text = $('journalText').value.trim();
-
-  const existingIndex = state.entries.findIndex(e => e.date === date);
-  const entry = {
-    date,
-    moodKey: mood.key,
-    mood,
-    text: skipped ? '' : text,
-    skipped,
-    createdAt: new Date().toISOString()
+  const start = isoDate(today);
+  const end = isoDate(addDays(today, 364));
+  return {
+    startDate: start,
+    endDate: end,
+    defaultRotation: 'Surgery',
+    rotations: defaultRotations,
+    entries: [],
+    todayDraft: { mood: '', diary: '' }
   };
+}
+function saveState() { localStorage.setItem(LS_KEY, JSON.stringify(state)); }
 
-  if (existingIndex >= 0) state.entries[existingIndex] = entry;
-  else state.entries.push(entry);
+function getTotalDays() {
+  return Math.max(1, daysBetween(state.startDate, state.endDate) + 1);
+}
+function getDayIndex(date = todayLocal()) {
+  return clamp(daysBetween(state.startDate, date) + 1, 1, getTotalDays());
+}
+function getCurrentRotation(dayIndex) {
+  let count = 0;
+  for (const r of state.rotations) {
+    const days = Math.max(1, Number(r.days) || 1);
+    if (dayIndex <= count + days) return { ...r, currentDay: dayIndex - count, percent: Math.round(((dayIndex - count) / days) * 100) };
+    count += days;
+  }
+  return { name: state.defaultRotation || 'Internship', days: getTotalDays(), currentDay: dayIndex, percent: Math.round(dayIndex / getTotalDays() * 100) };
+}
+function getPsalm(dayIndex) { return psalms[(dayIndex - 1) % psalms.length]; }
+function todayEntry() { return state.entries.find(e => e.date === isoDate(todayLocal())); }
+function tornCount() { return state.entries.length; }
+function daysLeft() { return Math.max(0, getTotalDays() - getDayIndex(todayLocal())); }
+function moodLabel(m) { return ({happy:'Happy', normal:'Normal', difficult:'Difficult', exhausting:'Exhausting'})[m] || 'Memory'; }
+function moodEmoji(m) { return ({happy:'😊', normal:'😐', difficult:'😟', exhausting:'🥵'})[m] || '📝'; }
 
-  state.entries.sort((a, b) => a.date.localeCompare(b.date));
-  save();
-  $('journalText').value = '';
-  $('journalScreen').classList.add('hidden');
-  pendingTearDate = null;
-  render();
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+function showToast(msg) {
+  const t = $('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 1700);
 }
 
-function renderTabs() {
-  document.querySelectorAll('.tab').forEach(b => b.classList.toggle('active', b.dataset.tab === currentTab));
-  const box = $('tabContent');
-  const entries = [...state.entries].sort((a, b) => b.date.localeCompare(a.date));
+function renderAll() {
+  renderToday();
+  renderStats();
+  renderTimeline();
+  renderMemories();
+  renderSettings();
+  renderNavCounts();
+}
 
-  if (currentTab === 'stats') return renderStats(box, entries);
+function renderToday() {
+  const dayIndex = getDayIndex();
+  const total = getTotalDays();
+  const remaining = Math.max(0, total - dayIndex);
+  const currentDate = todayLocal();
+  const rotation = getCurrentRotation(dayIndex);
+  const [verse, ref] = getPsalm(dayIndex);
+  const entry = todayEntry();
 
-  let filtered = entries;
-  if (currentTab === 'happy') filtered = entries.filter(e => getMood(e.moodKey || e.mood?.key).group === 'happy');
-  if (currentTab === 'sad') filtered = entries.filter(e => getMood(e.moodKey || e.mood?.key).group === 'sad');
+  $('overallPercent').textContent = `${Math.round((tornCount() / total) * 100)}%`;
+  $('overallMeta').textContent = `${tornCount()} pages torn • ${Math.max(0, total - tornCount())} left • ${total} total`;
+  $('overallBar').style.width = `${clamp((tornCount() / total) * 100, 0, 100)}%`;
 
-  if (!filtered.length) {
-    box.innerHTML = `<p class="muted">No pages here yet.</p>`;
-    return;
+  $('dayNumber').textContent = `Day ${dayIndex}`;
+  $('dateText').textContent = formatDate(currentDate);
+  $('rotationText').textContent = `${rotation.name} Rotation`;
+  $('remainingText').textContent = `${remaining} pages remaining`;
+  $('psalmVerse').textContent = verse;
+  $('psalmRef').textContent = ref;
+
+  $('tearBtn').textContent = entry ? 'Today Already Torn' : '▰ Tear Off Today';
+  $('tearBtn').classList.toggle('done', !!entry);
+  $('tearHint').textContent = entry ? 'Come back tomorrow for the next page.' : 'One day at a time. You got this. 💛';
+
+  if (entry) {
+    selectedMood = entry.mood;
+    $('diaryInput').value = entry.diary || '';
+  } else {
+    $('diaryInput').value = state.todayDraft?.diary || '';
   }
+  renderMoodButtons();
+  updateCharCount();
+}
 
-  box.innerHTML = filtered.map(e => {
-    const mood = getMood(e.moodKey || e.mood?.key);
-    return `<div class="memory"><div class="memory-top"><span>${fmt(e.date)}</span><span class="badge">${mood.icon} ${mood.label}</span></div><p>${e.text ? escapeHTML(e.text) : '<span class="muted">No diary written.</span>'}</p></div>`;
+function renderMoodButtons() {
+  document.querySelectorAll('.mood-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.mood === selectedMood);
+  });
+}
+function updateCharCount() { $('charCount').textContent = `${$('diaryInput').value.length} / 500`; }
+
+function renderTimeline() {
+  const dayIndex = getDayIndex();
+  let start = 1;
+  let html = '';
+  state.rotations.forEach(r => {
+    const days = Math.max(1, Number(r.days) || 1);
+    const completed = clamp(dayIndex - start + 1, 0, days);
+    const pct = Math.round((completed / days) * 100);
+    html += `<div class="timeline-row">
+      <div class="timeline-head"><span>${escapeHtml(r.name)}</span><small>${completed} / ${days} days</small></div>
+      <div class="mini-track"><span style="width:${pct}%"></span></div>
+      <div class="timeline-head"><small></small><small>${pct}%</small></div>
+    </div>`;
+    start += days;
+  });
+  $('rotationTimeline').innerHTML = html;
+}
+
+function renderStats() {
+  const total = getTotalDays();
+  const survived = tornCount();
+  const happy = state.entries.filter(e => e.mood === 'happy').length;
+  const normal = state.entries.filter(e => e.mood === 'normal').length;
+  const difficult = state.entries.filter(e => e.mood === 'difficult').length;
+  const exhausting = state.entries.filter(e => e.mood === 'exhausting').length;
+  const longest = getLongestStreak();
+  const current = getCurrentStreak();
+  const rotation = getCurrentRotation(getDayIndex());
+
+  $('statsAtGlance').innerHTML = `
+    <div class="stats-line"><span>Days Survived</span><b class="green">${survived}</b></div>
+    <div class="stats-line"><span>Days Remaining</span><b class="blue">${Math.max(0, total - survived)}</b></div>
+    <div class="stats-line"><span>😊 Happy Moments</span><b class="green">${happy}</b></div>
+    <div class="stats-line"><span>😐 Normal Moments</span><b class="blue">${normal}</b></div>
+    <div class="stats-line"><span>😟 Difficult Moments</span><b>${difficult}</b></div>
+    <div class="stats-line"><span>🥵 Exhausting Moments</span><b class="red">${exhausting}</b></div>
+    <div class="stats-line"><span>🔥 Longest Streak</span><b>${longest} day${longest===1?'':'s'}</b></div>
+    <div class="stats-line"><span>🦁 Current Streak</span><b>${current} day${current===1?'':'s'}</b></div>
+    <div class="stats-line"><span>◔ Rotation Progress</span><b>${rotation.percent}%</b></div>`;
+
+  $('statsGrid').innerHTML = [
+    ['Days Survived', survived], ['Days Remaining', Math.max(0, total - survived)], ['Happy', happy], ['Normal', normal], ['Difficult', difficult], ['Exhausting', exhausting], ['Longest Streak', `${longest}d`], ['Current Streak', `${current}d`], ['Internship Progress', `${Math.round((survived / total) * 100)}%`], ['Rotation Progress', `${rotation.percent}%`]
+  ].map(([a,b]) => `<div class="stat-card"><span>${a}</span><b>${b}</b></div>`).join('');
+}
+
+function renderNavCounts() {
+  $('happyNavCount').textContent = state.entries.filter(e => e.mood === 'happy').length;
+  $('difficultNavCount').textContent = state.entries.filter(e => e.mood === 'difficult' || e.mood === 'exhausting').length;
+}
+
+function renderMemories() {
+  const sorted = [...state.entries].sort((a,b) => b.date.localeCompare(a.date));
+  $('pagesList').innerHTML = renderMemoryCards(sorted);
+  $('happyList').innerHTML = renderMemoryCards(sorted.filter(e => e.mood === 'happy'));
+  $('difficultList').innerHTML = renderMemoryCards(sorted.filter(e => e.mood === 'difficult' || e.mood === 'exhausting'));
+  renderSideMonths(sorted);
+}
+
+function renderMemoryCards(entries) {
+  if (!entries.length) return `<div class="empty">No pages here yet. Tear off a day and it will appear here.</div>`;
+  return entries.map(e => {
+    const d = parseDate(e.date);
+    return `<article class="memory-card">
+      <header><span>${formatDate(d)}</span><span class="mood-pill">${moodEmoji(e.mood)} ${moodLabel(e.mood)}</span></header>
+      <p>${escapeHtml(e.diary || 'No diary written for this day.')}</p>
+      <blockquote>${escapeHtml(e.psalmVerse || '')}</blockquote>
+      <strong>${escapeHtml(e.psalmRef || '')}</strong>
+    </article>`;
   }).join('');
 }
 
-function renderStats(box, entries) {
-  const total = Math.max(1, daysBetween(state.start, state.end) + 1);
-  const happy = entries.filter(e => getMood(e.moodKey || e.mood?.key).group === 'happy').length;
-  const sad = entries.filter(e => getMood(e.moodKey || e.mood?.key).group === 'sad').length;
-  const neutral = entries.filter(e => getMood(e.moodKey || e.mood?.key).group === 'neutral').length;
-  box.innerHTML = `<div class="stat-grid">
-    <div class="stat-box"><strong>${entries.length}</strong><span>pages torn</span></div>
-    <div class="stat-box"><strong>${Math.max(0, total - entries.length)}</strong><span>pages left</span></div>
-    <div class="stat-box"><strong>${happy}</strong><span>happy / meaningful</span></div>
-    <div class="stat-box"><strong>${sad}</strong><span>difficult / sad</span></div>
-    <div class="stat-box"><strong>${neutral}</strong><span>normal days</span></div>
-    <div class="stat-box"><strong>${Math.round((entries.length / total) * 100)}%</strong><span>completed</span></div>
-  </div>`;
+function renderSideMonths(entries) {
+  if (!entries.length) { $('sideMonths').innerHTML = '<div class="empty">No pages torn yet.</div>'; return; }
+  const groups = {};
+  entries.forEach(e => {
+    const d = parseDate(e.date);
+    const key = d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    groups[key] ||= [];
+    groups[key].push(e);
+  });
+  $('sideMonths').innerHTML = Object.entries(groups).map(([month, list], idx) => `
+    <div class="month-group">
+      <div class="month-head"><span>${month}</span><b>${list.length}</b></div>
+      <div class="month-items" style="display:${idx === 0 ? 'block' : 'none'}">
+        ${list.slice(0, 6).map(e => `<div class="month-item"><b>Day ${e.dayIndex}</b><small>${shortDate(parseDate(e.date))} • ${moodEmoji(e.mood)} ${moodLabel(e.mood)}</small></div>`).join('')}
+      </div>
+    </div>`).join('');
+  document.querySelectorAll('.month-head').forEach(head => head.addEventListener('click', () => {
+    const items = head.nextElementSibling;
+    items.style.display = items.style.display === 'none' ? 'block' : 'none';
+  }));
 }
 
-function openSettings() {
-  $('settingsStart').value = state.start;
-  $('settingsEnd').value = state.end;
-  $('settingsRotation').value = state.rotation;
-  $('settingsModal').classList.remove('hidden');
+function renderSettings() {
+  $('startDateInput').value = state.startDate;
+  $('endDateInput').value = state.endDate;
+  $('defaultRotationInput').value = state.defaultRotation || 'Surgery';
+  $('rotationEditor').innerHTML = state.rotations.map((r, i) => `
+    <div class="rotation-edit-row">
+      <input data-rot-name="${i}" value="${escapeAttr(r.name)}" placeholder="Rotation name">
+      <input data-rot-days="${i}" type="number" min="1" value="${Number(r.days)||1}" placeholder="Days">
+      <button type="button" data-remove-rot="${i}" class="nav-item">Remove</button>
+    </div>`).join('') + `<button type="button" id="addRotationBtn" class="nav-item">+ Add Rotation</button>`;
+
+  $('addRotationBtn').onclick = () => { state.rotations.push({ name: 'New Rotation', days: 30 }); saveState(); renderAll(); };
+  document.querySelectorAll('[data-remove-rot]').forEach(btn => btn.onclick = () => {
+    if (state.rotations.length <= 1) return showToast('Keep at least one rotation.');
+    state.rotations.splice(Number(btn.dataset.removeRot), 1); saveState(); renderAll();
+  });
 }
 
-function saveSettings() {
-  state.start = $('settingsStart').value || state.start;
-  state.end = $('settingsEnd').value || state.end;
-  state.rotation = $('settingsRotation').value.trim() || state.rotation;
-  state.setup = true;
-  save();
-  $('settingsModal').classList.add('hidden');
-  render();
+function saveEntry(tear = false) {
+  const dayIndex = getDayIndex();
+  const [psalmVerse, psalmRef] = getPsalm(dayIndex);
+  const date = isoDate(todayLocal());
+  const existing = todayEntry();
+  const entry = {
+    date, dayIndex,
+    mood: selectedMood || 'normal',
+    diary: $('diaryInput').value.trim(),
+    psalmVerse, psalmRef,
+    rotation: getCurrentRotation(dayIndex).name,
+    savedAt: new Date().toISOString()
+  };
+  if (existing) Object.assign(existing, entry);
+  else state.entries.push(entry);
+  state.todayDraft = { mood: selectedMood, diary: $('diaryInput').value };
+  saveState();
+  renderAll();
+  showToast(tear ? 'Page torn and saved.' : 'Entry saved.');
 }
 
-function resetAll() {
-  if (confirm('Reset everything? This deletes all torn pages and diary memories on this device.')) {
-    state = defaultState();
-    save();
-    $('settingsModal').classList.add('hidden');
-    $('journalScreen').classList.add('hidden');
-    render();
+function getLongestStreak() {
+  if (!state.entries.length) return 0;
+  const dates = [...new Set(state.entries.map(e => e.date))].sort();
+  let best = 1, cur = 1;
+  for (let i = 1; i < dates.length; i++) {
+    const prev = parseDate(dates[i - 1]);
+    const now = parseDate(dates[i]);
+    if (daysBetween(prev, now) === 1) cur++; else cur = 1;
+    best = Math.max(best, cur);
   }
+  return best;
+}
+function getCurrentStreak() {
+  const set = new Set(state.entries.map(e => e.date));
+  let d = todayLocal(), count = 0;
+  while (set.has(isoDate(d))) { count++; d = addDays(d, -1); }
+  return count;
+}
+function escapeHtml(str) { return String(str || '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c])); }
+function escapeAttr(str) { return escapeHtml(str).replace(/`/g, '&#96;'); }
+
+function switchTab(tab) {
+  document.querySelectorAll('.nav-item').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  $(`${tab}Panel`)?.classList.add('active');
+  if (window.innerWidth < 1120) window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-init();
+document.addEventListener('click', (e) => {
+  const nav = e.target.closest('[data-tab]');
+  if (nav) switchTab(nav.dataset.tab);
+  const mood = e.target.closest('.mood-btn');
+  if (mood) {
+    selectedMood = mood.dataset.mood;
+    state.todayDraft = { mood: selectedMood, diary: $('diaryInput').value };
+    saveState();
+    renderMoodButtons();
+  }
+});
+
+$('diaryInput').addEventListener('input', () => {
+  updateCharCount();
+  state.todayDraft = { mood: selectedMood, diary: $('diaryInput').value };
+  saveState();
+});
+$('saveEntryBtn').addEventListener('click', () => saveEntry(false));
+$('tearBtn').addEventListener('click', () => {
+  if (todayEntry()) return showToast('Today is already torn.');
+  $('paper').classList.add('tearing');
+  setTimeout(() => { saveEntry(true); $('paper').classList.remove('tearing'); }, 650);
+});
+$('resetTodayBtn').addEventListener('click', () => {
+  const date = isoDate(todayLocal());
+  state.entries = state.entries.filter(e => e.date !== date);
+  saveState(); renderAll(); showToast('Today unlocked for testing.');
+});
+$('themeBtn').addEventListener('click', () => showToast('Dark faith theme is active.'));
+$('saveSettingsBtn').addEventListener('click', () => {
+  state.startDate = $('startDateInput').value || state.startDate;
+  state.endDate = $('endDateInput').value || state.endDate;
+  state.defaultRotation = $('defaultRotationInput').value.trim() || 'Surgery';
+  document.querySelectorAll('[data-rot-name]').forEach(input => {
+    const i = Number(input.dataset.rotName);
+    state.rotations[i].name = input.value.trim() || `Rotation ${i+1}`;
+  });
+  document.querySelectorAll('[data-rot-days]').forEach(input => {
+    const i = Number(input.dataset.rotDays);
+    state.rotations[i].days = Math.max(1, Number(input.value) || 1);
+  });
+  saveState(); renderAll(); showToast('Settings saved.'); switchTab('today');
+});
+
+renderAll();

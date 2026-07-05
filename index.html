@@ -3,102 +3,151 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Internship Tear Calendar</title>
+  <title>Internship Survivor</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <div class="app-shell">
-    <header class="topbar">
-      <div>
-        <p class="eyebrow">Digital tear-off calendar</p>
-        <h1>Internship Survivor</h1>
+    <aside class="sidebar">
+      <div class="brand">
+        <h1>Internship Survivor <span>💛</span></h1>
+        <p>One day closer to becoming the doctor God called you to be.</p>
       </div>
-      <button id="settingsBtn" class="icon-btn" title="Settings">⚙️</button>
-    </header>
 
-    <main>
-      <section id="setupScreen" class="screen card hidden">
-        <h2>Set your internship year</h2>
-        <p class="muted">Set this once. The app will remember it on this device.</p>
-        <label>Internship start date
-          <input id="startDate" type="date" />
-        </label>
-        <label>Internship end date
-          <input id="endDate" type="date" />
-        </label>
-        <label>Current / first rotation
-          <input id="rotationName" type="text" placeholder="Surgery" />
-        </label>
-        <button id="saveSetupBtn" class="primary">Start the countdown</button>
+      <nav class="side-nav" aria-label="Main navigation">
+        <button class="nav-item active" data-tab="today">⌂ <span>Today</span></button>
+        <button class="nav-item" data-tab="pages">▱ <span>Pages Torn</span></button>
+        <button class="nav-item" data-tab="happy">😊 <span>Happy Moments</span><b id="happyNavCount">0</b></button>
+        <button class="nav-item" data-tab="difficult">😟 <span>Difficult Moments</span><b id="difficultNavCount">0</b></button>
+        <button class="nav-item" data-tab="stats">▥ <span>Stats</span></button>
+        <button class="nav-item" data-tab="settings">⚙ <span>Settings</span></button>
+      </nav>
+
+      <section class="side-card month-list">
+        <h2>Pages Torn</h2>
+        <div id="sideMonths"></div>
       </section>
 
-      <section id="homeScreen" class="screen">
-        <div class="progress-card card">
-          <div>
-            <p class="muted">Overall progress</p>
-            <strong id="progressText">0%</strong>
-          </div>
-          <div class="progress-track"><div id="progressFill"></div></div>
-          <p id="daysSummary" class="muted"></p>
+      <section class="side-card quote-card">
+        <div class="quote-mark">“</div>
+        <p>I can do all things through Christ which strengtheneth me.</p>
+        <strong>Philippians 4:13</strong>
+        <div class="cross">✝</div>
+      </section>
+    </aside>
+
+    <main class="main-content">
+      <header class="topbar">
+        <div>
+          <span class="eyebrow">Overall Progress</span>
+          <h2 id="overallPercent">0%</h2>
+          <p id="overallMeta">0 pages torn • 365 left • 365 total</p>
         </div>
-
-        <div id="paperWrap" class="paper-wrap">
-          <article id="paper" class="paper">
-            <div class="pin"></div>
-            <p class="paper-label">INTERNSHIP YEAR</p>
-            <h2 id="dayTitle">DAY 1</h2>
-            <p id="paperDate" class="paper-date"></p>
-            <div class="divider"></div>
-            <p class="rotation" id="rotationText">Surgery Rotation</p>
-            <p id="daysLeftText" class="days-left"></p>
-            <blockquote id="quoteText"></blockquote>
-          </article>
+        <div class="top-actions">
+          <button id="themeBtn" title="Toggle theme">◐</button>
+          <button id="resetTodayBtn" title="Allow testing today again">↻</button>
         </div>
+      </header>
+      <div class="progress-track"><span id="overallBar"></span></div>
 
-        <button id="tearBtn" class="tear-btn">TEAR OFF TODAY</button>
-        <p id="tearHint" class="muted center"></p>
-      </section>
+      <section class="panel active" id="todayPanel">
+        <div class="center-stage">
+          <section class="paper-wrap">
+            <article id="paper" class="paper">
+              <div class="paper-pin"></div>
+              <div class="perforation"></div>
+              <p class="paper-kicker">Internship Year</p>
+              <h2 id="dayNumber">Day 1</h2>
+              <h3 id="dateText">Sunday, 5 July 2026</h3>
+              <div class="divider"><span>♡</span></div>
+              <h4 id="rotationText">Surgery Rotation</h4>
+              <p id="remainingText">364 pages remaining</p>
 
-      <section id="journalScreen" class="screen card hidden">
-        <p class="eyebrow">Before this day disappears forever...</p>
-        <h2>What happened today?</h2>
-        <div class="mood-grid" id="moodGrid"></div>
-        <textarea id="journalText" placeholder="Write one sentence or a few lines..."></textarea>
-        <div class="journal-actions">
-          <button id="skipJournalBtn" class="secondary">Skip journal</button>
-          <button id="saveJournalBtn" class="primary">Save memory</button>
+              <section class="psalm-box">
+                <p class="psalm-title">📖 Today's Psalm</p>
+                <blockquote id="psalmVerse">The Lord is my shepherd; I shall not want.</blockquote>
+                <strong id="psalmRef">Psalm 23:1</strong>
+              </section>
+            </article>
+
+            <button id="tearBtn" class="tear-btn">▰ Tear Off Today</button>
+            <p id="tearHint" class="tear-hint">One day at a time. You got this. 💛</p>
+          </section>
+
+          <section class="journal-card">
+            <h3>✨ How was your day?</h3>
+            <div class="mood-grid" role="group" aria-label="Choose mood">
+              <button type="button" class="mood-btn" data-mood="happy">😊 <span>Happy</span></button>
+              <button type="button" class="mood-btn" data-mood="normal">😐 <span>Normal</span></button>
+              <button type="button" class="mood-btn" data-mood="difficult">😟 <span>Difficult</span></button>
+              <button type="button" class="mood-btn" data-mood="exhausting">🥵 <span>Exhausting</span></button>
+            </div>
+            <label for="diaryInput">✎ Today's Diary <small>(optional)</small></label>
+            <textarea id="diaryInput" maxlength="500" placeholder="Write about your day..."></textarea>
+            <div class="diary-footer"><span id="charCount">0 / 500</span></div>
+            <button id="saveEntryBtn" class="save-btn">▣ Save Entry</button>
+          </section>
         </div>
       </section>
 
-      <section class="tabs card">
-        <button class="tab active" data-tab="history">Pages Torn</button>
-        <button class="tab" data-tab="happy">Happy</button>
-        <button class="tab" data-tab="sad">Difficult</button>
-        <button class="tab" data-tab="stats">Stats</button>
+      <section class="panel" id="pagesPanel">
+        <h2>Pages Torn</h2>
+        <p class="panel-subtitle">Every page here is a day you already conquered.</p>
+        <div id="pagesList" class="memory-list"></div>
       </section>
 
-      <section id="tabContent" class="card tab-content"></section>
+      <section class="panel" id="happyPanel">
+        <h2>Happy Moments</h2>
+        <p class="panel-subtitle">Proof that even a hard year can contain light.</p>
+        <div id="happyList" class="memory-list"></div>
+      </section>
+
+      <section class="panel" id="difficultPanel">
+        <h2>Difficult Moments</h2>
+        <p class="panel-subtitle">These are not failures. These are pages you survived.</p>
+        <div id="difficultList" class="memory-list"></div>
+      </section>
+
+      <section class="panel" id="statsPanel">
+        <h2>Stats</h2>
+        <div id="statsGrid" class="stats-grid"></div>
+      </section>
+
+      <section class="panel" id="settingsPanel">
+        <h2>Settings</h2>
+        <p class="panel-subtitle">Set your internship dates and rotations once. Everything saves on this device.</p>
+        <div class="settings-grid">
+          <label>Internship start date <input type="date" id="startDateInput"></label>
+          <label>Internship end date <input type="date" id="endDateInput"></label>
+          <label>Default rotation <input type="text" id="defaultRotationInput" placeholder="Surgery"></label>
+        </div>
+        <h3>Rotation timeline</h3>
+        <div id="rotationEditor"></div>
+        <button id="saveSettingsBtn" class="save-btn">Save Settings</button>
+      </section>
     </main>
+
+    <aside class="rightbar">
+      <section class="right-card">
+        <h3>🗓 Rotation Timeline</h3>
+        <div id="rotationTimeline"></div>
+      </section>
+      <section class="right-card">
+        <h3>📊 Stats at a Glance</h3>
+        <div id="statsAtGlance"></div>
+      </section>
+      <section class="right-card prayer-card">
+        <h3>✝ A Prayer For You</h3>
+        <p>The Lord will fight for you, and ye shall hold your peace.</p>
+        <strong>Exodus 14:14</strong>
+        <span>💛</span>
+      </section>
+    </aside>
   </div>
 
-  <div id="settingsModal" class="modal hidden">
-    <div class="modal-card">
-      <button id="closeSettingsBtn" class="close">×</button>
-      <h2>Settings</h2>
-      <label>Internship start date
-        <input id="settingsStart" type="date" />
-      </label>
-      <label>Internship end date
-        <input id="settingsEnd" type="date" />
-      </label>
-      <label>Rotation name
-        <input id="settingsRotation" type="text" />
-      </label>
-      <button id="saveSettingsBtn" class="primary">Save changes</button>
-      <button id="resetBtn" class="danger">Reset all app data</button>
-    </div>
-  </div>
+  <footer class="footer">♡ Built with faith, hope, and coffee • You are becoming who God called you to be • Internship is temporary. Purpose is eternal.</footer>
 
+  <div id="toast" class="toast"></div>
   <script src="script.js"></script>
 </body>
 </html>
