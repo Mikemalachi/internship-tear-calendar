@@ -113,6 +113,7 @@ function renderAll() {
   renderToday();
   renderStats();
   renderTimeline();
+  renderQuickRotationBars();
   renderRotationPanel();
   renderMemories();
   renderSettings();
@@ -174,6 +175,21 @@ function getRotationRows() {
     start += days;
     return row;
   });
+}
+
+function renderQuickRotationBars() {
+  const el = $('quickRotationBars');
+  if (!el) return;
+  const rows = getRotationRows();
+  el.innerHTML = rows.map(r => `
+    <article class="quick-rotation ${r.status}">
+      <div class="quick-rotation-top">
+        <strong>${escapeHtml(r.name)}</strong>
+        <span>${r.completed}/${r.days} days • ${r.pct}%</span>
+      </div>
+      <div class="quick-track"><span style="width:${r.pct}%"></span></div>
+      <small>${r.status === 'current' ? 'Current rotation' : rotationStatusText(r)}</small>
+    </article>`).join('');
 }
 
 function renderTimeline() {
