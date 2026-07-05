@@ -23,6 +23,17 @@ const quotes = [
   'Even difficult days become pages torn.'
 ];
 
+const psalms = [
+  { ref: 'Psalm 23:4', text: 'I will fear no evil: for thou art with me.' },
+  { ref: 'Psalm 27:1', text: 'The LORD is my light and my salvation; whom shall I fear?' },
+  { ref: 'Psalm 34:18', text: 'The LORD is nigh unto them that are of a broken heart.' },
+  { ref: 'Psalm 46:1', text: 'God is our refuge and strength, a very present help in trouble.' },
+  { ref: 'Psalm 55:22', text: 'Cast thy burden upon the LORD, and he shall sustain thee.' },
+  { ref: 'Psalm 56:3', text: 'What time I am afraid, I will trust in thee.' },
+  { ref: 'Psalm 121:2', text: 'My help cometh from the LORD, which made heaven and earth.' },
+  { ref: 'Psalm 138:3', text: 'In the day when I cried thou answeredst me.' }
+];
+
 const moods = [
   { key: 'happy', icon: '😊', label: 'Happy moment', group: 'happy' },
   { key: 'exciting', icon: '🌟', label: 'Exciting moment', group: 'happy' },
@@ -92,6 +103,8 @@ function bindEvents() {
 
   $('journalText').addEventListener('touchstart', () => $('journalText').focus(), { passive: true });
   $('journalText').addEventListener('click', () => $('journalText').focus());
+  $('moodGrid').addEventListener('click', chooseMoodFromEvent);
+  $('moodGrid').addEventListener('touchend', chooseMoodFromEvent, { passive: false });
 
   document.querySelectorAll('.tab').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -124,7 +137,8 @@ function render() {
   $('paperDate').textContent = fmt(t);
   $('rotationText').textContent = `${state.rotation} Rotation`;
   $('daysLeftText').textContent = rawDay > total ? 'Internship completed.' : `${Math.max(0, total - completed)} pages remaining`;
-  $('quoteText').textContent = `“${quotes[day % quotes.length]}”`;
+  const dailyPsalm = psalms[day % psalms.length];
+  $('quoteText').innerHTML = `<span class="main-quote">“${quotes[day % quotes.length]}”</span><span class="psalm-quote">${dailyPsalm.text}<br><strong>${dailyPsalm.ref}</strong></span>`;
   $('progressText').textContent = `${pct}%`;
   $('progressFill').style.width = `${pct}%`;
   $('daysSummary').textContent = `${completed} pages torn • ${Math.max(0, total - completed)} left • ${total} total`;
@@ -157,13 +171,17 @@ function renderMoodGrid() {
     b.type = 'button';
     b.className = 'mood-option';
     b.dataset.moodKey = m.key;
-    b.innerHTML = `<span class="mood-icon">${m.icon}</span><span><strong>${m.label}</strong><small>${m.group === 'happy' ? 'Saved as happy' : m.group === 'sad' ? 'Saved as difficult' : 'Saved as normal'}</small></span>`;
-    b.addEventListener('click', () => {
-      selectedMoodKey = m.key;
-      updateMoodSelection();
-    });
+    b.innerHTML = `<span class="mood-icon">${m.icon}</span><span class="mood-copy"><strong>${m.label}</strong><small>${m.group === 'happy' ? 'Saved as happy' : m.group === 'sad' ? 'Saved as difficult' : 'Saved as normal'}</small></span>`;
     grid.appendChild(b);
   });
+  updateMoodSelection();
+}
+
+function chooseMoodFromEvent(event) {
+  const btn = event.target.closest('.mood-option');
+  if (!btn) return;
+  event.preventDefault();
+  selectedMoodKey = btn.dataset.moodKey;
   updateMoodSelection();
 }
 

@@ -50,3 +50,34 @@ button:active{transform:scale(.98)}.primary{background:var(--accent);color:#2116
 .mood-option small{font-size:.72rem;color:var(--muted);font-weight:700;}
 .mood-option.selected small{color:#f5d391;}
 button:disabled{opacity:.6;cursor:not-allowed;}
+
+
+/* v3 stronger mobile click + Psalms */
+.mood-grid{position:relative;z-index:20;}
+.mood-option{
+  position:relative;
+  z-index:21;
+  width:100%;
+  pointer-events:auto;
+  -webkit-appearance:none;
+  appearance:none;
+}
+.mood-option *{pointer-events:none;}
+.mood-option:focus{outline:3px solid var(--accent);}
+#journalText{
+  position:relative;
+  z-index:30;
+  pointer-events:auto;
+  background:#100d0a;
+  caret-color:#fff4da;
+}
+.main-quote{display:block;margin-bottom:14px;}
+.psalm-quote{
+  display:block;
+  font-size:.98rem;
+  line-height:1.45;
+  color:#6f4b2a;
+  padding-top:14px;
+  border-top:1px dashed rgba(43,33,23,.22);
+}
+.psalm-quote strong{font-size:.82rem;letter-spacing:.04em;}
