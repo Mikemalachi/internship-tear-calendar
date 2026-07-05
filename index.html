@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Internship Tear Calendar</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Digital tear-off calendar</p>
+        <h1>Internship Survivor</h1>
+      </div>
+      <button id="settingsBtn" class="icon-btn" title="Settings">⚙️</button>
+    </header>
+
+    <main>
+      <section id="setupScreen" class="screen card hidden">
+        <h2>Set your internship year</h2>
+        <p class="muted">Set this once. The app will remember it on this device.</p>
+        <label>Internship start date
+          <input id="startDate" type="date" />
+        </label>
+        <label>Internship end date
+          <input id="endDate" type="date" />
+        </label>
+        <label>Current / first rotation
+          <input id="rotationName" type="text" placeholder="Surgery" />
+        </label>
+        <button id="saveSetupBtn" class="primary">Start the countdown</button>
+      </section>
+
+      <section id="homeScreen" class="screen">
+        <div class="progress-card card">
+          <div>
+            <p class="muted">Overall progress</p>
+            <strong id="progressText">0%</strong>
+          </div>
+          <div class="progress-track"><div id="progressFill"></div></div>
+          <p id="daysSummary" class="muted"></p>
+        </div>
+
+        <div id="paperWrap" class="paper-wrap">
+          <article id="paper" class="paper">
+            <div class="pin"></div>
+            <p class="paper-label">INTERNSHIP YEAR</p>
+            <h2 id="dayTitle">DAY 1</h2>
+            <p id="paperDate" class="paper-date"></p>
+            <div class="divider"></div>
+            <p class="rotation" id="rotationText">Surgery Rotation</p>
+            <p id="daysLeftText" class="days-left"></p>
+            <blockquote id="quoteText"></blockquote>
+          </article>
+        </div>
+
+        <button id="tearBtn" class="tear-btn">TEAR OFF TODAY</button>
+        <p id="tearHint" class="muted center"></p>
+      </section>
+
+      <section id="journalScreen" class="screen card hidden">
+        <p class="eyebrow">Before this day disappears forever...</p>
+        <h2>What happened today?</h2>
+        <div class="mood-grid" id="moodGrid"></div>
+        <textarea id="journalText" placeholder="Write one sentence or a few lines..."></textarea>
+        <div class="journal-actions">
+          <button id="skipJournalBtn" class="secondary">Skip journal</button>
+          <button id="saveJournalBtn" class="primary">Save memory</button>
+        </div>
+      </section>
+
+      <section class="tabs card">
+        <button class="tab active" data-tab="history">Pages Torn</button>
+        <button class="tab" data-tab="happy">Happy</button>
+        <button class="tab" data-tab="sad">Difficult</button>
+        <button class="tab" data-tab="stats">Stats</button>
+      </section>
+
+      <section id="tabContent" class="card tab-content"></section>
+    </main>
+  </div>
+
+  <div id="settingsModal" class="modal hidden">
+    <div class="modal-card">
+      <button id="closeSettingsBtn" class="close">×</button>
+      <h2>Settings</h2>
+      <label>Internship start date
+        <input id="settingsStart" type="date" />
+      </label>
+      <label>Internship end date
+        <input id="settingsEnd" type="date" />
+      </label>
+      <label>Rotation name
+        <input id="settingsRotation" type="text" />
+      </label>
+      <button id="saveSettingsBtn" class="primary">Save changes</button>
+      <button id="resetBtn" class="danger">Reset all app data</button>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
